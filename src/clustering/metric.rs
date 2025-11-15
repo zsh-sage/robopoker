@@ -184,8 +184,12 @@ impl crate::save::disk::Disk for Metric {
         }
         file.write_u16::<BE>(Self::footer()).expect("trailer");
     }
-    fn grow(_: Street) -> Self {
-        unreachable!("metric must be learned from kmeans clustering")
+    fn grow(street: Street) -> Self {
+        if street == Street::Rive {
+            Metric::default()
+        } else {
+            unreachable!("metric must be learned from kmeans clustering")
+        }
     }
 
     fn name() -> String {
