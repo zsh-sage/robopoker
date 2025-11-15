@@ -90,14 +90,7 @@ impl crate::save::disk::Disk for Lookup {
     /// abstractions for Preflop are cequivalent to just enumerating isomorphisms
     fn grow(street: Street) -> Self {
         match street {
-            Street::Rive => {
-                let mut btm = BTreeMap::new();
-                btm.insert(
-                    Isomorphism::from(Observation::from(0i64)),
-                    Abstraction::from(0i64),
-                );
-                btm.into()
-            }
+            Street::Rive => BTreeMap::new().into(),
             Street::Pref => IsomorphismIterator::from(Street::Pref)
                 .enumerate()
                 .map(|(k, iso)| (iso, Abstraction::from((Street::Pref, k))))

@@ -318,9 +318,7 @@ impl crate::save::disk::Disk for Layer {
     /// Persists all three artifacts (metric, lookup, transitions) to disk.
     fn save(&self) {
         self.metric().save();
-        if self.street() != Street::Rive {
-            self.lookup().save();
-        }
+        self.lookup().save();
         self.decomp().save();
     }
 
@@ -336,7 +334,13 @@ impl crate::save::disk::Disk for Layer {
     /// - `street`: The betting street to cluster
     fn grow(street: Street) -> Self {
         if street == Street::Rive {
-            return Self::load(street);
+            return Layer {
+                street,
+                metric: Metric::default(),
+                points: Vec::new(),
+                kmeans: Vec::new(),
+                bounds: Vec::new(),
+            };
         }
         let mut layer = Self::load(street);
         log::info!("{:<32}{:<32}", "initializing kmeans", street);
@@ -372,13 +376,27 @@ impl crate::save::disk::Disk for Layer {
                 points: Vec::default(),
                 metric: Metric::default(),
             },
-            _ => Self {
-                street,
-                bounds: Vec::default(),
-                kmeans: Vec::default(),
-                points: Lookup::load(street.next()).projections(),
-                metric: Metric::load(street.next()),
-            },
+            _ => {
+                let next_street = street.next();
+                let (points, metric) = if next_street == Street::Rive {
+                    (
+                        Lookup::grow(next_street).projections(),
+                        Metric::grow(next_street),
+                    )
+                } else {
+                    (
+                        Lookup::load(next_street).projections(),
+                        Metric::load(next_street),
+                    )
+                };
+                Self {
+                    street,
+                    bounds: Vec::default(),
+                    kmeans: Vec::default(),
+                    points,
+                    metric,
+                }
+            }
         }
     }
 }
