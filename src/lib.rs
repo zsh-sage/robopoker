@@ -45,11 +45,11 @@ const SINKHORN_ITERATIONS: usize = 128;
 const SINKHORN_TOLERANCE: Energy = 0.001;
 
 // kmeans clustering parameters
-const KMEANS_FLOP_TRAINING_ITERATIONS: usize = 20;
-const KMEANS_TURN_TRAINING_ITERATIONS: usize = 24;
-const KMEANS_FLOP_CLUSTER_COUNT: usize = 128;
-const KMEANS_TURN_CLUSTER_COUNT: usize = 144;
-const KMEANS_EQTY_CLUSTER_COUNT: usize = 101;
+const KMEANS_FLOP_TRAINING_ITERATIONS: usize = 1;
+const KMEANS_TURN_TRAINING_ITERATIONS: usize = 1;
+const KMEANS_FLOP_CLUSTER_COUNT: usize = 2;
+const KMEANS_TURN_CLUSTER_COUNT: usize = 2;
+const KMEANS_EQTY_CLUSTER_COUNT: usize = 2;
 
 /// rps mccfr parameteres
 const ASYMMETRIC_UTILITY: f32 = 2.0;
