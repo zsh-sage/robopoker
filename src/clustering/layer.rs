@@ -318,7 +318,9 @@ impl crate::save::disk::Disk for Layer {
     /// Persists all three artifacts (metric, lookup, transitions) to disk.
     fn save(&self) {
         self.metric().save();
-        self.lookup().save();
+        if self.street() != Street::Rive {
+            self.lookup().save();
+        }
         self.decomp().save();
     }
 
@@ -333,6 +335,9 @@ impl crate::save::disk::Disk for Layer {
     /// # Parameters
     /// - `street`: The betting street to cluster
     fn grow(street: Street) -> Self {
+        if street == Street::Rive {
+            return Self::load(street);
+        }
         let mut layer = Self::load(street);
         log::info!("{:<32}{:<32}", "initializing kmeans", street);
         layer.kmeans = layer.init_kmeans();

@@ -26,8 +26,12 @@ impl From<BTreeMap<Isomorphism, Abstraction>> for Lookup {
 impl Lookup {
     /// lookup the pre-computed abstraction for the outer observation
     pub fn lookup(&self, obs: &Observation) -> Abstraction {
+        let iso = Isomorphism::from(*obs);
+        if iso.0.street() == Street::Rive {
+            return Abstraction::from(iso.0.equity());
+        }
         self.0
-            .get(&Isomorphism::from(*obs))
+            .get(&iso)
             .cloned()
             .expect(&format!("precomputed abstraction missing for {obs}"))
     }
@@ -85,15 +89,15 @@ impl crate::save::disk::Disk for Lookup {
     /// abstractions for River are calculated once via obs.equity
     /// abstractions for Preflop are cequivalent to just enumerating isomorphisms
     fn grow(street: Street) -> Self {
-        use rayon::iter::IntoParallelIterator;
-        use rayon::iter::ParallelIterator;
         match street {
-            Street::Rive => IsomorphismIterator::from(Street::Rive)
-                .collect::<Vec<_>>()
-                .into_par_iter()
-                .map(|iso| (iso, Abstraction::from(iso.0.equity())))
-                .collect::<BTreeMap<_, _>>()
-                .into(),
+            Street::Rive => {
+                let mut btm = BTreeMap::new();
+                btm.insert(
+                    Isomorphism::from(Observation::from(0i64)),
+                    Abstraction::from(0i64),
+                );
+                btm.into()
+            }
             Street::Pref => IsomorphismIterator::from(Street::Pref)
                 .enumerate()
                 .map(|(k, iso)| (iso, Abstraction::from((Street::Pref, k))))
