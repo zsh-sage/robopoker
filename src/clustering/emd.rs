@@ -32,21 +32,25 @@ impl Arbitrary for EMD {
         let p = Histogram::random();
         let q = Histogram::random();
         let r = Histogram::random();
+        let btm = std::iter::empty()
+            .chain(p.support())
+            .chain(q.support())
+            .chain(r.support())
+            .flat_map(|x| {
+                std::iter::empty()
+                    .chain(p.support())
+                    .chain(q.support())
+                    .chain(r.support())
+                    .map(move |y| (x, y))
+            })
+            .filter(|(x, y)| x > y)
+            .map(|(x, y)| Pair::from((x, y)))
+            .map(|paired| (paired, rand::random::<f32>()))
+            .collect::<BTreeMap<_, _>>();
+        let max = btm.values().copied().fold(f32::MIN_POSITIVE, f32::max);
         let m = Metric::from(
-            std::iter::empty()
-                .chain(p.support())
-                .chain(q.support())
-                .chain(r.support())
-                .flat_map(|x| {
-                    std::iter::empty()
-                        .chain(p.support())
-                        .chain(q.support())
-                        .chain(r.support())
-                        .map(move |y| (x, y))
-                })
-                .filter(|(x, y)| x > y)
-                .map(|(x, y)| Pair::from((x, y)))
-                .map(|paired| (paired, rand::random::<f32>()))
+            btm.into_iter()
+                .map(|(index, distance)| (index, distance / max))
                 .collect::<BTreeMap<_, _>>(),
         );
         Self(m, p, q, r)

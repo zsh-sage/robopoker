@@ -89,6 +89,8 @@ impl crate::save::disk::Disk for Lookup {
     /// abstractions for River are calculated once via obs.equity
     /// abstractions for Preflop are cequivalent to just enumerating isomorphisms
     fn grow(street: Street) -> Self {
+        use rayon::iter::IntoParallelIterator;
+        use rayon::iter::ParallelIterator;
         match street {
             Street::Rive => BTreeMap::new().into(),
             Street::Pref => IsomorphismIterator::from(Street::Pref)
