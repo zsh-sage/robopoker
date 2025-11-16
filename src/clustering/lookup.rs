@@ -134,6 +134,10 @@ impl crate::save::disk::Disk for Lookup {
         Self(lookup)
     }
     fn save(&self) {
+        if self.0.is_empty() {
+            log::info!("skipping      lookup save for empty map");
+            return;
+        }
         const N_FIELDS: u16 = 2;
         let street = self.street();
         let ref path = Self::path(street);

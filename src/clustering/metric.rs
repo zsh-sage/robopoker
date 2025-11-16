@@ -165,6 +165,10 @@ impl crate::save::disk::Disk for Metric {
         Self(metric)
     }
     fn save(&self) {
+        if self.0.is_empty() {
+            log::info!("skipping      metric save for empty map");
+            return;
+        }
         const N_FIELDS: u16 = 2;
         let street = self.street();
         let ref path = Self::path(street);
