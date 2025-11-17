@@ -37,6 +37,9 @@ impl Lookup {
     }
     /// generate the entire space of inner layers
     pub fn projections(&self) -> Vec<Histogram> {
+        if self.0.is_empty() {
+            return Vec::new();
+        }
         use rayon::iter::IntoParallelIterator;
         use rayon::iter::ParallelIterator;
         IsomorphismIterator::from(self.street().prev())
@@ -47,7 +50,7 @@ impl Lookup {
     }
     /// distribution over potential next states. this "layer locality" is what
     /// makes imperfect recall hierarchical kmeans nice
-    fn future(&self, iso: &Isomorphism) -> Histogram {
+    pub(crate) fn future(&self, iso: &Isomorphism) -> Histogram {
         assert!(iso.0.street() != Street::Rive);
         iso.0
             .children()
