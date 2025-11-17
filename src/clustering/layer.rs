@@ -171,6 +171,9 @@ impl Layer {
     fn decomp(&self) -> Shadow {
         // @parallelizable
         log::info!("{:<32}{:<32}", "calculating transitions", self.street());
+        if self.kmeans().is_empty() {
+            return Shadow::default();
+        }
         self.kmeans()
             .iter()
             .cloned()
@@ -368,35 +371,35 @@ impl crate::save::disk::Disk for Layer {
     /// # Parameters
     /// - `street`: The betting street to load
     fn load(street: Street) -> Self {
-        match street {
-            Street::Rive => Self {
+        if street == Street::Rive {
+            return Self {
                 street,
                 bounds: Vec::default(),
                 kmeans: Vec::default(),
                 points: Vec::default(),
                 metric: Metric::default(),
-            },
-            _ => {
-                let next_street = street.next();
-                let (points, metric) = if next_street == Street::Rive {
-                    (
-                        Lookup::grow(next_street).projections(),
-                        Metric::grow(next_street),
-                    )
-                } else {
-                    (
-                        Lookup::load(next_street).projections(),
-                        Metric::load(next_street),
-                    )
-                };
-                Self {
-                    street,
-                    bounds: Vec::default(),
-                    kmeans: Vec::default(),
-                    points,
-                    metric,
-                }
-            }
+            };
+        }
+        let next_street = street.next();
+        let (lookup, metric) = if next_street == Street::Rive {
+            (Lookup::grow(next_street), Metric::grow(next_street))
+        } else {
+            (Lookup::load(next_street), Metric::load(next_street))
+        };
+        use rayon::iter::IntoParallelIterator;
+        use rayon::iter::ParallelIterator;
+        let points = IsomorphismIterator::from(street)
+            .collect::<Vec<Isomorphism>>()
+            .into_par_iter()
+            .map(|iso| lookup.future(&iso))
+            .collect::<Vec<Histogram>>();
+
+        Self {
+            street,
+            bounds: Vec::default(),
+            kmeans: Vec::default(),
+            points,
+            metric,
         }
     }
 }

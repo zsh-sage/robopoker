@@ -28,31 +28,36 @@ impl EMD {
 
 impl Arbitrary for EMD {
     fn random() -> Self {
-        // construct random metric satisfying symmetric semipositivity
         let p = Histogram::random();
         let q = Histogram::random();
         let r = Histogram::random();
-        let btm = std::iter::empty()
+
+        // to construct a random metric that satisfies the triangle inequality
+        // we construct a random set of 2d points for each abstraction
+        // and calculate the euclidian distance between each pair of points
+        let points = std::iter::empty()
             .chain(p.support())
             .chain(q.support())
             .chain(r.support())
-            .flat_map(|x| {
-                std::iter::empty()
-                    .chain(p.support())
-                    .chain(q.support())
-                    .chain(r.support())
-                    .map(move |y| (x, y))
+            .map(|abstraction| (abstraction, (rand::random(), rand::random())))
+            .collect::<BTreeMap<_, (f32, f32)>>();
+
+        let btm = points
+            .iter()
+            .flat_map(|(a1, p1)| {
+                points
+                    .iter()
+                    .map(move |(a2, p2)| ((a1.clone(), a2.clone()), (p1, p2)))
             })
-            .filter(|(x, y)| x > y)
-            .map(|(x, y)| Pair::from((x, y)))
-            .map(|paired| (paired, rand::random::<f32>()))
+            .filter(|((a1, a2), _)| a1 > a2)
+            .map(|((a1, a2), (p1, p2))| {
+                let dx = p1.0 - p2.0;
+                let dy = p1.1 - p2.1;
+                (Pair::from((a1, a2)), (dx * dx + dy * dy).sqrt())
+            })
             .collect::<BTreeMap<_, _>>();
-        let max = btm.values().copied().fold(f32::MIN_POSITIVE, f32::max);
-        let m = Metric::from(
-            btm.into_iter()
-                .map(|(index, distance)| (index, distance / max))
-                .collect::<BTreeMap<_, _>>(),
-        );
+
+        let m = Metric::from(btm);
         Self(m, p, q, r)
     }
 }

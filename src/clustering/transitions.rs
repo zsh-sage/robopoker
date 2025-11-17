@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::mem::size_of;
 use std::u16;
 
+#[derive(Default)]
 pub struct Shadow(BTreeMap<Abstraction, Histogram>);
 
 impl From<BTreeMap<Abstraction, Histogram>> for Shadow {
@@ -64,6 +65,10 @@ impl crate::save::disk::Disk for Shadow {
         Self(decomp)
     }
     fn save(&self) {
+        if self.0.is_empty() {
+            log::info!("skipping      transition save for empty map");
+            return;
+        }
         const N_FIELDS: u16 = 3;
         let street = self
             .0
